@@ -2,6 +2,21 @@
 
 Running log of gotchas, decisions, and fixes. Newest at top.
 
+## v0.6 — Scheduling + persistence
+
+### Caldera as a systemd service
+- **Goal:** Survive terminal close and reboot; no more foreground process.
+- **Detail:** Unit at /etc/systemd/system/caldera.service runs the venv Python as user ubuntuai, with `Environment=PATH=` baking in BOTH the venv and /usr/local/go/bin — Go must be on PATH or sandcat fails to compile under systemd. `Restart=on-failure`, `After=docker.service`. Started without --insecure/--build so it loads local.yml and the pre-built UI.
+
+### Secrets in a sourced env file, not the scripts
+- **Pattern:** ~/caldera/sparring.env (chmod 600, gitignored via `*.env`) holds ANTHROPIC_API_KEY, CALDERA_API_KEY, and the Wazuh indexer creds. Scripts read them via os.getenv; the wrapper sources the file. Cron runs bare, so the wrapper must source explicitly — .bashrc would not be seen.
+
+### Poll-timeout quirk
+- **Observation:** The Discovery profile loops longer than the 10-min poll ceiling (20 x 30s), so runs exhaust MAX_POLLS still "running" and proceed anyway. Data capture is unaffected (3 executed / 0 detected as expected), but for cleaner windows, raise MAX_POLLS or shorten the operation.
+
+### Weekly cron
+- **Schedule:** `0 2 * * 0` (Sundays 2 AM) runs sparring_run.sh, logging to cron.log. One command now does the entire loop unattended: launch -> poll -> pull executed -> pull detected -> correlate -> Claude gap report -> timestamped artifacts in runs/ + one-line summary in sparring.log.
+
 ## v0.5 — Claude gap-report generation
 
 ### LLM output was accurate but not platform-scoped
