@@ -1,0 +1,32 @@
+﻿{
+  "operation": "sparring-v0.2-api",
+  "platform": "linux",
+  "coverage_pct": 0.0,
+  "gaps": [
+    {
+      "technique_id": "T1033",
+      "technique_name": "System Owner/User Discovery",
+      "status": "MISSED",
+      "reason": "No detection rules exist for common Linux user-discovery commands (whoami, id, w, who, last); auditd or execve syscall logging is likely absent or not ingested by SIEM, leaving identity-enumeration activity invisible.",
+      "risk": "MED",
+      "recommended_detection": "Enable auditd rules to log execve syscalls (e.g., -a always,exit -F arch=b64 -S execve) and create a SIEM alert that fires when processes named whoami, id, w, who, or last are spawned by a non-interactive or unexpected parent process (e.g., a web-server or API process); correlate with /var/log/audit/audit.log ingestion."
+    },
+    {
+      "technique_id": "T1057",
+      "technique_name": "Process Discovery",
+      "status": "MISSED",
+      "reason": "Execution of process-enumeration utilities (ps, pstree, /proc traversal) is not monitored; without auditd execve telemetry or eBPF-based process telemetry, bulk process listing by an attacker is indistinguishable from normal traffic in the SIEM.",
+      "risk": "MED",
+      "recommended_detection": "Ingest auditd execve events and write a SIEM rule alerting on execution of ps, pstree, or direct reads of /proc/[0-9]*/status|cmdline by processes whose parent is an internet-facing service (e.g., nginx, gunicorn, node); threshold: more than 5 /proc reads within 10 seconds by the same UID outside maintenance windows."
+    },
+    {
+      "technique_id": "T1087.001",
+      "technique_name": "Account Discovery: Local Account",
+      "status": "MISSED",
+      "reason": "Read access to /etc/passwd and /etc/shadow, or execution of getent/cut commands against them, generates no alert because file-open syscall auditing for sensitive credential files is not configured, and no SIEM rule exists for local account enumeration on this Linux host.",
+      "risk": "HIGH",
+      "recommended_detection": "Add auditd file-watch rules (-w /etc/passwd -p r -k local_account_enum and -w /etc/shadow -p r -k local_account_enum) and ingest audit.log; create a SIEM alert that triggers when key=local_account_enum appears for a process whose effective UID does not match expected admin accounts or whose parent is an application-tier process, firing within 60 seconds of first event."
+    }
+  ],
+  "top_priority": "T1087.001"
+}
