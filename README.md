@@ -109,7 +109,7 @@ Auto-generated Navigator layer showing green (detected) / yellow (partial) / red
 | v0.2 | Executed-technique pull from Caldera via REST API (`pull_executed.py`) | ✅ Done |
 | v0.3 | Detected-technique pull from Wazuh indexer over the operation window (`pull_detected.py`) | ✅ Done |
 | v0.4 | Correlation engine — executed vs detected → coverage score + gaps | ✅ Done |
-| v0.5 | Claude gap-report generation + risk ranking | 🔲 Planned |
+| v0.5 | Claude gap-report generation + risk ranking | ✅ Done |
 | v0.6 | Scheduled recurring campaigns + coverage trending over time | 🔲 Planned |
 | v0.7 | Historical trend tracking + PDF executive report | 🔲 Planned |
 | v0.8 | Microsoft Sentinel connector — correlate emulation against a second SIEM | 🔲 Planned |
