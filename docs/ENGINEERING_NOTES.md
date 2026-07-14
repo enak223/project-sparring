@@ -2,6 +2,28 @@
 
 Running log of gotchas, decisions, and fixes. Newest at top.
 
+## v0.2 — Caldera API automation
+
+### API returns 401 even from localhost
+- **Problem:** `curl http://localhost:8888/api/v2/operations` returned `401: Unauthorized`, despite older docs saying localhost needs no key.
+- **Cause:** Caldera 5.x enforces the API key on all requests, including localhost.
+- **Fix:** Send the key in a `KEY:` header on every request: `curl -H "KEY: <key>" ...`.
+
+### API key stored as an unreadable hash
+- **Problem:** `api_key_red` in `conf/local.yml` was an Argon2 hash (`$argon2id$...`), not a usable plaintext token — same one-way hashing as the login creds.
+- **Cause:** Caldera auto-generated and hashed the key on first run; plaintext is unrecoverable.
+- **Fix:** Stop the server, `sed` a known plaintext value into `local.yml` (`api_key_red: <value>`), restart. Config edits only take effect while the server is stopped, since it rewrites local.yml on shutdown.
+
+### Operation "never finishes" / links show status -3
+- **Problem:** After launching via API, some links stayed at status `-3` and the op state stayed `running`.
+- **Cause:** Agent beacon interval is 30–60s (`sleep_min`/`sleep_max`); the atomic planner issues one ability per check-in, so a Discovery run takes minutes, and an open-ended op keeps re-queueing the last ability.
+- **Fix:** Set `auto_close: true` on the operation so it self-terminates after one pass. Poll `pull_executed.py` again after the next beacon to catch pending (`-3`) links. Only status `0` counts as executed for coverage.
+
+### Ephemeral data on restart
+- **Problem:** After a server restart, operations AND enrolled agents were gone (`/api/v2/operations` and `/api/v2/agents` both returned `[]`).
+- **Cause:** Caldera stores state in memory by default; a restart wipes it.
+- **Fix (deferred):** Re-enroll the agent and re-run. For scheduled campaigns (v0.6), make Caldera persistent (systemd service + data volume) so reboots don't reset everything.
+
 ## v0.1 — Caldera deployment
 
 ### System Python too new for Caldera
