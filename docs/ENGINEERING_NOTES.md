@@ -2,6 +2,19 @@
 
 Running log of gotchas, decisions, and fixes. Newest at top.
 
+## v0.4 — Correlation engine
+
+### Sub-technique vs parent granularity
+- **Problem:** Executed list may carry a sub-technique (T1087.001) while Wazuh reports only the parent (T1087) — naive exact-match would call a real catch "missed."
+- **Fix:** Three-way match — EXACT (verbatim), PARTIAL (sub-technique caught only at parent level), MISSED (neither). Partials are reported but do NOT count toward the headline coverage number.
+
+### Coverage = exact only
+- **Decision:** Headline coverage = exact_matches / total_executed. Partials shown as a separate "if counted" line.
+- **Why:** The strict number is the honest, defensible one — an interviewer can't accuse the metric of inflating itself by counting near-misses as hits.
+
+### Operation-ID safety check
+- **Detail:** correlate.py refuses to run if executed and detected records carry different operation_ids — prevents silently correlating mismatched campaigns into garbage.
+
 ## v0.3 — Wazuh detected-technique pull
 
 ### rule.mitre.id is an array, not a scalar
