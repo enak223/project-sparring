@@ -2,6 +2,28 @@
 
 Running log of gotchas, decisions, and fixes. Newest at top.
 
+## v0.3 — Wazuh detected-technique pull
+
+### rule.mitre.id is an array, not a scalar
+- **Problem:** Extracting the technique ID assumed a single string; Wazuh returns a list.
+- **Cause:** A Wazuh alert can map to multiple ATT&CK techniques, so `rule.mitre.id` is always a JSON array (e.g. `["T1082"]`).
+- **Fix:** Iterate the array and add each ID to the detected set, rather than reading a single value.
+
+### Time window auto-derived from the operation
+- **Decision:** pull_detected.py takes only the Caldera operation ID, not manual timestamps.
+- **Why:** Reading start/end from the operation itself keeps the detected[] window locked to the exact same campaign as executed[] — eliminating the manual-timestamp copying that muddied the v0.1 hand-scored result.
+- **Detail:** window = operation `start` -> latest link `finish` (or now, if still running) + 30s buffer. The buffer catches alerts that fire a few seconds after the last technique, since detection is not instantaneous.
+
+### Self-signed cert on the indexer
+- **Problem:** HTTPS to the Wazuh indexer (9200) fails cert verification.
+- **Cause:** Homelab indexer uses a self-signed certificate.
+- **Fix:** Disable verification in the SSL context (CERT_NONE). Acceptable for a homelab; a production build would trust the real CA instead.
+
+### Indexer password was not admin/admin
+- **Problem:** `admin:admin` returned Unauthorized against 9200.
+- **Cause:** The indexer password is set by `INDEXER_PASSWORD` in the wazuh-docker compose file (default `SecretPassword`), not `admin`.
+- **Fix:** Pull the real value from docker-compose.yml; supply via `WAZUH_INDEXER_PASS`. (Note: the manager API on 55000 uses a different `API_PASSWORD` — don't confuse the two.)
+
 ## v0.2 — Caldera API automation
 
 ### API returns 401 even from localhost
@@ -10,35 +32,35 @@ Running log of gotchas, decisions, and fixes. Newest at top.
 - **Fix:** Send the key in a `KEY:` header on every request: `curl -H "KEY: <key>" ...`.
 
 ### API key stored as an unreadable hash
-- **Problem:** `api_key_red` in `conf/local.yml` was an Argon2 hash (`$argon2id$...`), not a usable plaintext token — same one-way hashing as the login creds.
+- **Problem:** `api_key_red` in `conf/local.yml` was an Argon2 hash (`$argon2id$...`), not a usable plaintext token.
 - **Cause:** Caldera auto-generated and hashed the key on first run; plaintext is unrecoverable.
-- **Fix:** Stop the server, `sed` a known plaintext value into `local.yml` (`api_key_red: <value>`), restart. Config edits only take effect while the server is stopped, since it rewrites local.yml on shutdown.
+- **Fix:** Stop the server, `sed` a known plaintext value into `local.yml`, restart. Config edits only take effect while the server is stopped, since it rewrites local.yml on shutdown.
 
 ### Operation "never finishes" / links show status -3
 - **Problem:** After launching via API, some links stayed at status `-3` and the op state stayed `running`.
-- **Cause:** Agent beacon interval is 30–60s (`sleep_min`/`sleep_max`); the atomic planner issues one ability per check-in, so a Discovery run takes minutes, and an open-ended op keeps re-queueing the last ability.
-- **Fix:** Set `auto_close: true` on the operation so it self-terminates after one pass. Poll `pull_executed.py` again after the next beacon to catch pending (`-3`) links. Only status `0` counts as executed for coverage.
+- **Cause:** Agent beacon interval is 30-60s; the atomic planner issues one ability per check-in, so a Discovery run takes minutes, and an open-ended op keeps re-queueing the last ability.
+- **Fix:** Set `auto_close: true` on the operation. Poll again after the next beacon to catch pending (`-3`) links. Only status `0` counts as executed.
 
 ### Ephemeral data on restart
-- **Problem:** After a server restart, operations AND enrolled agents were gone (`/api/v2/operations` and `/api/v2/agents` both returned `[]`).
+- **Problem:** After a server restart, operations AND enrolled agents were gone (both APIs returned `[]`).
 - **Cause:** Caldera stores state in memory by default; a restart wipes it.
-- **Fix (deferred):** Re-enroll the agent and re-run. For scheduled campaigns (v0.6), make Caldera persistent (systemd service + data volume) so reboots don't reset everything.
+- **Fix (deferred):** Re-enroll and re-run. For scheduled campaigns (v0.6), make Caldera persistent (systemd + data volume).
 
 ## v0.1 — Caldera deployment
 
 ### System Python too new for Caldera
 - **Problem:** `pip install -r requirements.txt` fails on ubuntuai.
 - **Cause:** System Python is 3.14; Caldera targets 3.8-3.11 and several pinned deps have no 3.14 wheels.
-- **Fix:** Installed Python 3.11.9 via pyenv (single-threaded build to avoid OOM), created a venv against it. Always activate the venv before running the server.
+- **Fix:** Installed Python 3.11.9 via pyenv (single-threaded build to avoid OOM), created a venv against it.
 
 ### Default login rejected
 - **Problem:** Cannot log into the Caldera UI with any documented default.
 - **Cause:** `conf/default.yml` ships Argon2 hashes, not plaintext; known upstream issue with `--insecure`.
-- **Fix:** Created `conf/local.yml` with plaintext creds, started without `--insecure`. Also removes the ship-with-admin/admin risk.
+- **Fix:** Created `conf/local.yml` with plaintext creds, started without `--insecure`.
 
-### sandcat plugin won''t enable — go not found
+### sandcat plugin will not enable - go not found
 - **Problem:** `Error enabling plugin=sandcat: No such file or directory: go`; agents cannot compile.
-- **Cause:** Go toolchain missing (Caldera needs >=1.19 to build the Sandcat agent).
+- **Cause:** Go toolchain missing (Caldera needs >=1.19).
 - **Fix:** Installed Go 1.22.5 to /usr/local/go, added to PATH, restarted server.
 
 ### Agent deploy times out from target
@@ -48,5 +70,5 @@ Running log of gotchas, decisions, and fixes. Newest at top.
 
 ### First operation never finishes
 - **Problem:** Operation ran ~40 min, re-executing the same discovery ability on a loop.
-- **Cause:** Auto Close left at "keep open forever"; the atomic planner loops the final ability.
-- **Fix (methodology):** Set Auto Close to "auto close operation". Mark start/end times and score Wazuh with an absolute time filter. See reports/v0.1-smoke-test.md.
+- **Cause:** Auto Close left at "keep open forever".
+- **Fix (methodology):** Set Auto Close to "auto close operation". Mark start/end times, score Wazuh with an absolute time filter. See reports/v0.1-smoke-test.md.
