@@ -2,6 +2,21 @@
 
 Running log of gotchas, decisions, and fixes. Newest at top.
 
+## v0.5 — Claude gap-report generation
+
+### LLM output was accurate but not platform-scoped
+- **Problem:** First run recommended Windows telemetry (Sysmon, Security EID 4688/4798) for a Linux target — technically correct ATT&CK advice, wrong OS.
+- **Cause:** The coverage record didn't state the target platform, so Claude hedged across both OSes.
+- **Fix:** Added a `platform` field + `--platform` flag, injected into the prompt with an explicit "scope to THIS platform only" instruction. Second run produced 100% Linux-correct auditd/`/proc`/`/etc/passwd` detections.
+- **Lesson:** Validate LLM output against the environment, don't trust it blind — the platform gap was only visible by checking the recommendations against reality.
+
+### Markdown fences despite "JSON only"
+- **Problem:** Claude wrapped output in ```json fences even when told not to.
+- **Fix:** `strip_fences()` removes them before parsing; parser also keeps raw text on JSON-decode failure so nothing is lost.
+
+### Two modes, one prompt
+- **Design:** `--api` (automated, ~sub-cent per report on claude-sonnet-4-6) and `--prompt-pack` (writes the assembled prompt for manual paste, zero cost). Same system prompt both ways, so the prompt-pack is a faithful preview of the API path.
+
 ## v0.4 — Correlation engine
 
 ### Sub-technique vs parent granularity
