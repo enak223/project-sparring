@@ -2,6 +2,21 @@
 
 Running log of gotchas, decisions, and fixes. Newest at top.
 
+## v0.7 — Trend tracking + PDF report
+
+### Coverage-over-time from the runs directory
+- **Design:** trend_report.py walks runs/*/coverage.json, parses timestamped dir names into a time series, charts coverage % over time with matplotlib (headless Agg backend). Feeds off the v0.6 wrapper's output — no new data collection.
+
+### Single-data-point handling
+- **Problem:** One campaign makes a naive line chart empty/broken.
+- **Fix:** Special-case len==1 to plot a labeled baseline marker ("baseline established; trend accrues weekly") so the chart looks intentional from the first run.
+
+### PDF via reportlab
+- **Detail:** Title, summary line (latest coverage + trend delta once >=2 runs), embedded chart, styled gap table. reportlab + matplotlib installed into the caldera venv, not system Python.
+
+### gitignore exception for the sample PDF
+- **Note:** Global *.pdf ignore blocks generated reports; added `!reports/sample-trend.pdf` negation to commit one sample artifact.
+
 ## v0.6 — Scheduling + persistence
 
 ### Caldera as a systemd service
