@@ -38,3 +38,6 @@ desktop.ini
 
 # Runtime secrets (sparring.env etc) - never commit
 *.env
+
+# Allow the committed sample trend report
+!reports/sample-trend.pdf
