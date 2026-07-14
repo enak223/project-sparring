@@ -10,7 +10,7 @@ measure what the detection stack actually caught, and report the gaps.
 | **v0.3** | Query Wazuh indexer for detected TTPs in the operation window (`pull_detected.py`) | Done |
 | **v0.4** | Comparison engine - executed vs detected, compute per-campaign coverage score | Done |
 | **v0.5** | Claude detection-gap analysis - what was missed, likely why, recommended detections | Done |
-| **v0.6** | Scheduled recurring campaigns + coverage trending over time | Planned |
+| **v0.6** | Scheduled recurring campaigns + coverage trending over time | Done |
 | **v0.7** | Historical trend tracking + PDF executive report | Planned |
 | **v0.8** | Microsoft Sentinel connector - correlate emulation against a second SIEM | Planned |
 
