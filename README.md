@@ -105,9 +105,9 @@ Auto-generated Navigator layer showing green (detected) / yellow (partial) / red
 
 | Version | Milestone | Status |
 |---------|-----------|--------|
-| v0.1 | Caldera server deploy + agent enrollment on homelab endpoints | 🔲 Planned |
-| v0.2 | First scheduled campaign; executed-technique log export | 🔲 Planned |
-| v0.3 | Sentinel + Wazuh detection pull via n8n over campaign window | 🔲 Planned |
+| v0.1 | Caldera server deploy + agent enrollment on homelab endpoints | ✅ Done |
+| v0.2 | Executed-technique pull from Caldera via REST API (`pull_executed.py`) | ✅ Done |
+| v0.3 | Detected-technique pull from Wazuh indexer over the operation window | ✅ Done |
 | v0.4 | Technique correlation engine (Detected / Partial / Silent) | 🔲 Planned |
 | v0.5 | Claude gap-report generation + risk ranking | 🔲 Planned |
 | v0.6 | Coverage scoring per tactic + ATT&CK Navigator layer | 🔲 Planned |
