@@ -111,7 +111,7 @@ Auto-generated Navigator layer showing green (detected) / yellow (partial) / red
 | v0.4 | Correlation engine — executed vs detected → coverage score + gaps | ✅ Done |
 | v0.5 | Claude gap-report generation + risk ranking | ✅ Done |
 | v0.6 | Scheduled recurring campaigns + coverage trending over time | ✅ Done |
-| v0.7 | Historical trend tracking + PDF executive report | 🔲 Planned |
+| v0.7 | Historical trend tracking + PDF executive report | ✅ Done |
 | v0.8 | Microsoft Sentinel connector — correlate emulation against a second SIEM | 🔲 Planned |
 
 ---
