@@ -35,3 +35,6 @@ desktop.ini
 .idea/
 # Allow the template (real .env.* stay ignored)
 !.env.example
+
+# Runtime secrets (sparring.env etc) - never commit
+*.env
