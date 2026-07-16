@@ -1,0 +1,20 @@
+﻿## Project Sparring - auditd rules
+## Deploy to: /etc/audit/rules.d/sparring.rules on the target endpoint
+## Then load with: sudo augenrules --load
+##
+## These generate the audit events that Wazuh rules (see ../wazuh/sparring_rules.xml)
+## then tag with ATT&CK technique IDs. One audit key per technique for clean 1:1 mapping.
+
+## T1033 - System Owner/User Discovery (whoami/id already caught by tripwire; add w/who)
+-a always,exit -F arch=b64 -S execve -F exe=/usr/bin/w -F auid>=1000 -F auid!=-1 -F key=sparring_t1033
+-a always,exit -F arch=b64 -S execve -F exe=/usr/bin/who -F auid>=1000 -F auid!=-1 -F key=sparring_t1033
+
+## T1057 - Process Discovery
+-a always,exit -F arch=b64 -S execve -F exe=/usr/bin/ps -F auid>=1000 -F auid!=-1 -F key=sparring_t1057
+-a always,exit -F arch=b64 -S execve -F exe=/usr/bin/pstree -F auid>=1000 -F auid!=-1 -F key=sparring_t1057
+-a always,exit -F arch=b64 -S execve -F exe=/usr/bin/top -F auid>=1000 -F auid!=-1 -F key=sparring_t1057
+
+## T1087.001 - Local Account Discovery (READ access to credential files)
+-w /etc/passwd -p r -k sparring_t1087
+-w /etc/shadow -p r -k sparring_t1087
+-a always,exit -F arch=b64 -S execve -F exe=/usr/bin/getent -F auid>=1000 -F auid!=-1 -F key=sparring_t1087
